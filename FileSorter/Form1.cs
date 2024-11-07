@@ -27,7 +27,7 @@ namespace FileSorter
             ".odt", ".fodt", ".ods", ".fods", ".odp", ".fodp", ".odg", ".fodg", ".odf", ".sda", ".sdb", ".sdc", ".sdd",
             ".rtf", ".txt", ".htm", ".html", ".wps", ".mht", ".mhtml", ".xml", ".prn", ".slk", ".xaml", ".js", ".css",
             ".xps", ".oxps", ".pdf",
-            ".bmp", ".emf",".gif",".jpg",".jpeg",".png",".tif",".tiff",".tga",".eps",".webp",".svg",
+            ".bmp", ".emf",".gif",".jpg",".jpeg",".png",".tif",".tiff",".tga",".eps",".webp",".svg", ".xcf", ".psd",
             ".epub", ".mobi", 
             ".eml", ".msg"
         };
@@ -90,7 +90,7 @@ namespace FileSorter
         private void RefreshCounters()
         {
             lblFileCount.Text = string.Format("Total Files: {0}", FileList.Count());
-            long fileCount = FileList.Where(x => x.Selected).Count();
+            int fileCount = FileList.Where(x => x.Selected).Count();
             long fileSize = FileList.Where(x => x.Selected).Sum(y => y.Size);
             lblSelectedCount.Text = string.Format("Selected Files: {0}", fileCount);
             lblSelectedSize.Text = string.Format("Selected Size: {0}", PrettyFormat(fileSize));
@@ -201,13 +201,14 @@ namespace FileSorter
                     string[] dirs = Directory.GetDirectories(path);
                     foreach (var dir in dirs) 
                     {
+                        DirectoryInfo info = new DirectoryInfo(dir);
                         DirItem newDirItem = new DirItem()
                         {
                             AbsolutePath = dir,
                             ChildDirs = new List<DirItem>(),
                             ChildFiles = new List<FileItem>(),
                             Parent = parent,
-                            PartialPath = Path.GetDirectoryName(dir)
+                            PartialPath = info.Name
                         };
                         parent.ChildDirs.Add(newDirItem);
                         WalkDirectory(dir, newDirItem);
@@ -343,9 +344,63 @@ namespace FileSorter
             Updating = false;
             RefreshCounters();
         }
+
         private void RunProcess(string destination)
         {
+            int fileCount = FileList.Where(x => x.Selected).Count();
+            int progress = 0;
+            int success = 0;
+            int error = 0;
+            prgProcess.Value = 0;
+            prgProcess.Maximum = fileCount + 2;
+            foreach (var f in FileList)
+            {
+                progress++;
+                prgProcess.Value = progress + 1;
+                prgProcess.Value = progress;
+                if (f.Selected)
+                {
+                    string destFolder = ComposePath(f.Parent, destination);
+                    string srcFile = Path.Combine(f.Parent.AbsolutePath, f.FileName);
+                    string destFile = Path.Combine(destFolder, f.FileName);
+                    lblProcessFile.Text = string.Format("Processing {0} of {1}: {2}\r\nFrom \"{3}\" to \"{4}\"", progress, fileCount, f.FileName, srcFile, destFile);
+                    Application.DoEvents();
+                    if (!Directory.Exists(destFolder))
+                    {
+                        try
+                        {
+                            Directory.CreateDirectory(destFolder);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message);
+                            continue;
+                        }
+                    }
+                    try
+                    {
+                        File.Copy(srcFile, destFile, false);
+                        success++;
+                    }
+                    catch (Exception ex)
+                    {
+                        error++;
+                        MessageBox.Show(ex.Message);
+                        continue;
+                    }
+                }
+            }
+            lblProcessFile.Text = string.Format("Done. {0} of {1} files copied, {2} errors.", success, fileCount, error);
+            prgProcess.Value = prgProcess.Maximum;
+        }
 
+        private string ComposePath(DirItem dir, string destination)
+        {
+            if (dir.Parent == null)
+            {
+                return destination;
+            }
+            return Path.Combine(ComposePath(dir.Parent, destination), dir.PartialPath);
         }
     }
 }
