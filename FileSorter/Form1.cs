@@ -96,6 +96,22 @@ namespace FileSorter
             lblSelectedSize.Text = string.Format("Selected Size: {0}", PrettyFormat(fileSize));
         }
 
+        private void DisplaySelectedFiles()
+        {
+
+            StringBuilder sb = new StringBuilder();
+            foreach (var file in FileList)
+            {
+                if (file.Selected)
+                {
+                    string srcFile = Path.Combine(file.Parent.AbsolutePath, file.FileName);
+                    sb.AppendLine(srcFile);
+                }
+            }
+            txtFileList.Clear();
+            txtFileList.Text = sb.ToString();
+        }
+
         private string PrettyFormat(long size)
         {
             if (Math.Abs(size) >= 1000000000000)
@@ -242,6 +258,7 @@ namespace FileSorter
                 }
             }
             RefreshCounters();
+            DisplaySelectedFiles();
         }
 
         private void cmdBrowseOutput_Click(object sender, EventArgs e)
@@ -298,6 +315,7 @@ namespace FileSorter
             }
             Updating = false;
             RefreshCounters();
+            DisplaySelectedFiles();
         }
 
         private void chkCheckAllTypes_Click(object sender, EventArgs e)
@@ -313,6 +331,7 @@ namespace FileSorter
             }
             Updating = false;
             RefreshCounters();
+            DisplaySelectedFiles();
         }
 
         private void cmdCheckCommonTypes_Click(object sender, EventArgs e)
@@ -343,6 +362,7 @@ namespace FileSorter
             }
             Updating = false;
             RefreshCounters();
+            DisplaySelectedFiles();
         }
 
         private void RunProcess(string destination)
@@ -361,9 +381,10 @@ namespace FileSorter
                 if (f.Selected)
                 {
                     string destFolder = ComposePath(f.Parent, destination);
-                    string srcFile = Path.Combine(f.Parent.AbsolutePath, f.FileName);
+                    string srcPath = f.Parent.AbsolutePath;
+                    string srcFile = Path.Combine(srcPath, f.FileName);
                     string destFile = Path.Combine(destFolder, f.FileName);
-                    lblProcessFile.Text = string.Format("Processing {0} of {1}: {2}\r\nFrom \"{3}\" to \"{4}\"", progress, fileCount, f.FileName, srcFile, destFile);
+                    lblProcessFile.Text = string.Format("Processing {0} of {1}: {2}\r\nFrom \"{3}\" to \"{4}\"", progress, fileCount, f.FileName, srcPath, destFolder);
                     Application.DoEvents();
                     if (!Directory.Exists(destFolder))
                     {

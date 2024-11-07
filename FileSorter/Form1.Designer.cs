@@ -118,6 +118,7 @@
             this.txtFileList.Location = new System.Drawing.Point(189, 70);
             this.txtFileList.Multiline = true;
             this.txtFileList.Name = "txtFileList";
+            this.txtFileList.ScrollBars = System.Windows.Forms.ScrollBars.Both;
             this.txtFileList.Size = new System.Drawing.Size(599, 263);
             this.txtFileList.TabIndex = 6;
             // 
